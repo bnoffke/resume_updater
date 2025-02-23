@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "mcp-server-filesystem": "^0.6.2"
+  }
+}

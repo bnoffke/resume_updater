@@ -1,0 +1,7 @@
+I'm starting a new project using mcp-agent to use AI to read a job description, read my current resume, read the github repos I contribute to, and write a new resume. mcp-agent is a package that facilitates orchestrating and composing llm agents. It's recommended to install with uv, but I'm not very familiar with using uv, can you help me set up an environment using uv? A few things to consider:
+We might need a toml file before installing with uv, if so, then make a minimum toml file to support the uv install.
+Run pip install uv, you have my permission.
+Try to install everything with uv, when possible, but pip is fine if needed.
+These are the dependencies I expect we'll need: mcp, mcp-agent, openai, npx, uvx, mcp-server-fetch, mcp-server-filesystem
+We'll have mcp servers running, which will require some node functionality to run.
+Upate (or create) the toml file with our dependencies.

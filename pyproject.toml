@@ -1,0 +1,13 @@
+[build-system]
+requires = ["uv"]
+build-backend = "uv"
+
+[project]
+dependencies = [
+    "mcp",
+    "mcp-agent",
+    "openai",
+    "npx",
+    "uvx",
+    "mcp-server-fetch"
+]
