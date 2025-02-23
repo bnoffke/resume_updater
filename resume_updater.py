@@ -57,11 +57,6 @@ async def update_resume(
             server_names=["fetch"]
         )
 
-        # Set up parallel workflow
-        parallel = ParallelLLM(
-            fan_out_agents=[pdf_agent, github_agent, job_agent],
-            llm_factory=OpenAIAugmentedLLM
-        )
 
         # Create optimizer and evaluator agents
         optimizer = Agent(
@@ -87,6 +82,12 @@ async def update_resume(
             llm_factory=OpenAIAugmentedLLM,
             min_rating=QualityRating.EXCELLENT
         )
+        # Set up parallel workflow
+        parallel = ParallelLLM(
+            fan_in_agent=eo_workflow,
+            fan_out_agents=[pdf_agent, github_agent, job_agent],
+            llm_factory=OpenAIAugmentedLLM
+        )
 
         # Execute parallel analysis
         inputs = {
@@ -97,7 +98,7 @@ async def update_resume(
         
         parallel_results = await parallel.generate_structured(
             message=inputs,
-            output_model=ResumeContent
+            response_model=ResumeContent
         )
 
         # Generate optimized resume
@@ -131,10 +132,10 @@ async def main():
     await update_resume(
         resume_path="/home/bnoffke/Documents/Resume/current_resume.pdf",
         github_repos=[
-            "https://github.com/user/repo1",
-            "https://github.com/user/repo2"
+            "https://github.com/bnoffke/resume_updater",
+            "https://github.com/bnoffke/llm_scripting"
         ],
-        job_posting_url="https://example.com/job-posting",
+        job_posting_url="https://careers-uwcu.icims.com/jobs/5702/infrastructure-engineering-architect/job",
         output_path="/home/bnoffke/Documents/Resume/tailored_resume.pdf"
     )
 
