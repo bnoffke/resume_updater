@@ -128,15 +128,16 @@ async def update_resume(
         logger.info(f"Updated resume written to {output_path}")
 
 # Main execution
-async def main():
+async def main(
+    resume_path="/home/bnoffke/Documents/Resume/current_resume.pdf",
+    github=["https://github.com/bnoffke", "https://github.com/bnoffke/resume_updater", "https://github.com/bnoffke/llm_scripting"],
+    job_posting_url="https://careers-uwcu.icims.com/jobs/5702/infrastructure-engineering-architect/job",
+    output_path="/home/bnoffke/Documents/Resume/tailored_resume.pdf"):
     await update_resume(
-        resume_path="/home/bnoffke/Documents/Resume/current_resume.pdf",
-        github_repos=[
-            "https://github.com/bnoffke/resume_updater",
-            "https://github.com/bnoffke/llm_scripting"
-        ],
-        job_posting_url="https://careers-uwcu.icims.com/jobs/5702/infrastructure-engineering-architect/job",
-        output_path="/home/bnoffke/Documents/Resume/tailored_resume.pdf"
+        resume_path=resume_path,
+        github_repos=github,
+        job_posting_url=job_posting_url,
+        output_path=output_path
     )
 
 if __name__ == "__main__":
