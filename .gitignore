@@ -175,3 +175,10 @@ mcp_agent.secrets.yaml
 
 #Node modules
 node_modules/
+
+#Misc
+test_mcp.py
+fetch_test.py
+poetry.lock
+.gitignore
+mcp-agent.jsonl

@@ -1,13 +1,34 @@
 [build-system]
-requires = ["uv"]
-build-backend = "uv"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "resume_updater"
+version = "0.1.0"
+description = "Automated resume updater using LLMs"
+authors = ["Ben Noffke - bnoffke3790@gmail.com"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+mcp = "*"
+mcp-agent = "*"
+openai = "*"
+npx = "*"
+uvx = "*"
+mcp-server-fetch = "*"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.0.0"
+isort = "^5.12.0"
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
 
 [project]
-dependencies = [
-    "mcp",
-    "mcp-agent",
-    "openai",
-    "npx",
-    "uvx",
-    "mcp-server-fetch"
+name = "resume_updater"
+version = "0.1.0"
+description = "Automated resume updater using LLMs"
+authors = [
+    { name = "Ben Noffke", email = "bnoffke3790@gmail.com" }
 ]
+requires-python = ">=3.10,<4.0"
