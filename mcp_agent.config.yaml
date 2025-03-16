@@ -17,6 +17,12 @@ mcp:
     fetch:
       command: "node"
       args: ["/home/bnoffke/mcp_servers/fetch-mcp/dist/index.js"]
+    playwright:
+      command: "xvfb-run"
+      "args": ["-a","npx","-y", "@executeautomation/playwright-mcp-server"]
+    puppeteer:
+      command: "xvfb-run"
+      args: ["-a","npx","-y", "@modelcontextprotocol/server-puppeteer"]
     markdownify:
       command: "node"
       args: ["/home/bnoffke/mcp_servers/markdownify-mcp/dist/index.js"]

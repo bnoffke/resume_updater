@@ -182,3 +182,4 @@ fetch_test.py
 poetry.lock
 .gitignore
 mcp-agent.jsonl
+.puppeteerrc.js
