@@ -15,14 +15,16 @@ logger:
 mcp:
   servers:
     fetch:
-      command: "uvx"
-      args: ["run","mcp-server-fetch"]
+      command: "node"
+      args: ["/home/bnoffke/mcp_servers/fetch-mcp/dist/index.js"]
+    markdownify:
+      command: "node"
+      args: ["/home/bnoffke/mcp_servers/markdownify-mcp/dist/index.js"]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/bnoffke/Documents/Resume"]
     mcp-pandoc:
-      command: "uv"
-      args: ["--directory","/home/bnoffke/mcp_servers/mcp-pandoc","run","mcp-pandoc"]
+      command: "poetry"
+      args: ["run","uv","--directory","/home/bnoffke/mcp_servers/mcp-pandoc","run","mcp-pandoc"]
 openai:
-  # Secrets (API keys, etc.) are stored in an mcp_agent.secrets.yaml file which can be gitignored
   default_model: gpt-4o-mini
