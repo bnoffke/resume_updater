@@ -26,6 +26,15 @@ This tool analyzes your current resume, GitHub repositories, and a job posting t
    - Integrate PDF page length validation into the evaluator-optimizer workflow
    - Add automated font size and margin adjustments while preserving readability
 
+5. **More Isolated Agents/Prompts**
+   - Break down current monolithic agents into focused, single-task components
+     - Resume analyzer
+     - Job requirements extractor
+     - Content optimizer
+     - Format validator
+   - Store prompts in separate YAML files for easy testing and iteration
+   - Implement basic unit tests with mock responses
+
 ### Approach
 
 1. **Input Processing**
