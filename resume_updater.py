@@ -15,6 +15,10 @@ from mcp_agent.workflows.llm.augmented_llm import RequestParams
 # Initialize app
 app = MCPApp(name="resume_updater")
 
+#Build request parameters, with options to specify a separate model for evaluator-optimizer
+small_model_req_param = RequestParams(model="gpt-4o-mini")
+eo_req_param = RequestParams(model="gpt-4o")
+
 async def update_resume(
     resume_path: str,
     github_repos: List[str],
@@ -62,7 +66,7 @@ async def update_resume(
             # Execute job analysis first
             job_content = await job_llm.generate_str(
                 f"Analyze job posting at {job_posting_url}. Additional job description can be found here: {job_description_path}",
-                request_params=RequestParams(model="gpt-4o-mini")
+                request_params=small_model_req_param
             )
 
             # Use job requirements to guide GitHub analysis
@@ -71,19 +75,19 @@ async def update_resume(
                 {job_content}
                 
                 Analyze these repos focusing on relevant experience and skills, extracting information to be used in a resume: {', '.join(github_repos)}""",
-                request_params=RequestParams(model="gpt-4o-mini")
+                request_params=small_model_req_param
             )
 
             # Parse resume
             pdf_content = await pdf_llm.generate_str(
                 f"Read and parse resume from {resume_path}",
-                request_params=RequestParams(model="gpt-4o-mini")
+                request_params=small_model_req_param
             )
 
             # Process additional info
             additional_info_content = await info_llm.generate_str(
                 f"Read and extract content from {additional_info}",
-                request_params=RequestParams(model="gpt-4o-mini")
+                request_params=small_model_req_param
             )
 
         # Manually aggregate results
@@ -97,18 +101,38 @@ async def update_resume(
         # Create optimizer and evaluator agents
         optimizer = Agent(
             name="resume_optimizer",
-            instruction="Generate optimized resume content targeting the job requirements",
+            instruction="""
+            You will receive the following information:
+            1. Current resume
+            2. Github projects
+            3. Job requirements
+            4. Additional information
+            Generate an optimized one-page resume.
+            Using the current resume as a reference, update with relevant information and include relevant github projects with their summaries that target the job description.
+            Use additional_information provided to enhance the resume.
+            Avoid flowerly language.
+            Be sure to include links for the github repos and use a human readable name as the text for the github link. Keep it concise by making the project title a link.
+            Please remove any content that is not relevant to the job description.
+            Do NOT fabricate outcomes like "decreasing report generation time by 30%.". Do NOT include any technologies or libraries that are not explicitly mentioned in the current resume or github projects.
+            Return ONLY the content of the resume, in markdown format.
+            """,
             server_names=["filesystem"]
         )
 
         evaluator = Agent(
             name="resume_evaluator",
-            instruction="""Evaluate resume for:
-            1. Relevance to job requirements
-            2. Clear demonstration of skills
+            instruction=f"""Evaluate resume for:
+            1. Relevance to job requirements:
+                Job Requirements:
+                {job_content}
+            2. Using the information provided to include other information and format specifications:
+                {additional_info_content}
+            3. Clear demonstration of skills
                 a. The order of skills and experience should list most relevant first
-            3. Length (must fit one page)
-            4. Professional formatting""",
+                b. Skills should align with the job requirements above
+                c. Skills should incorporate relevant additional information provided
+            4. Length (must fit one page)
+            5. Professional formatting""",
             server_names=["filesystem"]
         )
 
@@ -122,18 +146,10 @@ async def update_resume(
 
         # Use evaluator-optimizer workflow on the aggregated results
         optimization_prompt = f"""
-        Aggregated Analysis: {aggregated_results}
-        
-        Generate an optimized one-page resume targeting this job position.
-        Match the headers of the current resume, but be sure to update with relevant information
-        and include relevant github projects with their summaries that target the job description.
-        Avoid flowerly language.
-        Be sure to include links for the github repos. Do not keep github repos that were not explicitly provided.
-        You can remove any content that is not relevant to the job description.
-        Do NOT fabricate outcomes like "decreasing report generation time by 30%.". Do NOT include any technologies or libraries that are not explicitly mentioned in the current resume or github projects.
+        Generate an optimized one-page resume with the following context: {aggregated_results}
         """
 
-        final_resume = await eo_workflow.generate_str(optimization_prompt, request_params=RequestParams(model="gpt-4o-mini"))
+        final_resume = await eo_workflow.generate_str(optimization_prompt, request_params=eo_req_param)
 
 
         write_agent = Agent(
@@ -147,22 +163,31 @@ async def update_resume(
             llm = await write_agent.attach_llm(OpenAIAugmentedLLM)
             await llm.generate_str(
                 f"Write the following content to {output_path}.md: {final_resume}",
-                request_params=RequestParams(model="gpt-4o-mini")
+                request_params=small_model_req_param
             )
+
+        #Prompt user to review the resume at {output_path}.md then hit enter to continue. Do this by writing to the console.
+        message = f"Please review the resume at {output_path}.md then hit enter to continue when you've finished making changes."
+        width = len(message) + 4
+        print("╔" + "═" * width + "╗")
+        print("║  " + message + "  ║")
+        print("╚" + "═" * width + "╝")
+        input()
+
 
         # Write final resume to PDF
         write_agent_pdf = Agent(
             name="pdf_writer",
             instruction="Convert content to PDF format",
-            server_names=["filesystem", "mcp-pandoc"]
+            server_names=["filesystem", "markdown2pdf"]
         )
         
         # Use write_agent_pdf to convert the txt to pdf, with explicity paths
         async with write_agent_pdf:
             llm = await write_agent_pdf.attach_llm(OpenAIAugmentedLLM)
             await llm.generate_str(
-                f"Convert the content of {output_path}.md to PDF format and save it as {output_path}.pdf",
-                request_params=RequestParams(model="gpt-4o-mini")
+                f"Place the content of {output_path}.md into a string, then convert the markdown string to PDF format and save it as tailored_resume.pdf",
+                request_params=small_model_req_param
             )
 
         logger.info(f"Updated resume written to {output_path}.pdf")

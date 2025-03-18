@@ -17,20 +17,17 @@ mcp:
     fetch:
       command: "node"
       args: ["/home/bnoffke/mcp_servers/fetch-mcp/dist/index.js"]
-    playwright:
-      command: "xvfb-run"
-      "args": ["-a","npx","-y", "@executeautomation/playwright-mcp-server"]
-    puppeteer:
-      command: "xvfb-run"
-      args: ["-a","npx","-y", "@modelcontextprotocol/server-puppeteer"]
     markdownify:
       command: "node"
       args: ["/home/bnoffke/mcp_servers/markdownify-mcp/dist/index.js"]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/bnoffke/Documents/Resume"]
-    mcp-pandoc:
-      command: "poetry"
-      args: ["run","uv","--directory","/home/bnoffke/mcp_servers/mcp-pandoc","run","mcp-pandoc"]
+    markdown2pdf:
+      command: "node"
+      args: ["/home/bnoffke/mcp_servers/markdown2pdf-mcp/build/index.js"]
+      "env": {
+        "M2P_OUTPUT_DIR": "/home/bnoffke/Documents/Resume"
+      }
 openai:
   default_model: gpt-4o-mini

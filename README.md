@@ -12,6 +12,7 @@ This tool analyzes your current resume, GitHub repositories, and a job posting t
    - Reads and parses existing resume from PDF
    - Analyzes specified GitHub repositories for project details
    - Extracts requirements from job posting URL and description file
+      - **Caveat**: The `fetch-mcp` server retrieves only web content present in HTML. To handle more complex content, such as JavaScript-rendered iFrames, additional MCP servers must be utilized.
 
 2. **Content Optimization**
    - Aggregates information from all sources
@@ -25,17 +26,19 @@ This tool analyzes your current resume, GitHub repositories, and a job posting t
 
 4. **Output Generation**
    - Generates the final resume in markdown format
+   - Pauses to allow the user to review and tweak the tailored resume
    - Converts to PDF using Pandoc
 
 ## Technologies Used
 
 - **MCP Agent Framework**: Core orchestration system for AI agents
-- **OpenAI GPT-4**: Powers the AI agents for content analysis and generation
+- **OpenAI**: Powers the AI agents for content analysis and generation
 - **MCP Servers**:
   - `fetch-mcp`: Handles URL content retrieval
   - `markdownify-mcp`: Converts between formats
   - `filesystem-mcp`: Manages file operations
-  - `mcp-pandoc`: Handles PDF conversion
+  - `markdown2pdf-mcp`: Converts markdown to PDF format
+
 
 ## Setup Instructions
 

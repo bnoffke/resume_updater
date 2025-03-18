@@ -183,3 +183,5 @@ poetry.lock
 .gitignore
 mcp-agent.jsonl
 .puppeteerrc.js
+uv.lock
+package-lock.json
