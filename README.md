@@ -27,7 +27,6 @@ This tool analyzes your current resume, GitHub repositories, and a job posting t
 4. **Output Generation**
    - Generates the final resume in markdown format
    - Pauses to allow the user to review and tweak the tailored resume
-   - Converts to PDF using Pandoc
 
 ## Technologies Used
 
@@ -38,7 +37,6 @@ This tool analyzes your current resume, GitHub repositories, and a job posting t
   - `markdownify-mcp`: Converts between formats
   - `filesystem-mcp`: Manages file operations
   - `markdown2pdf-mcp`: Converts markdown to PDF format
-
 
 ## Setup Instructions
 
@@ -71,8 +69,9 @@ This tool analyzes your current resume, GitHub repositories, and a job posting t
    ```
 
 ### Additional Requirements
-1. **Install Pandoc**:
-   Required for PDF conversion. Follow your system's package manager instructions.
+1. **Setup markdown2pdf-mcp server**:
+   - Clone the repository from [markdown2pdf-mcp](https://github.com/2b3pro/markdown2pdf-mcp)
+   - Follow the installation instructions in the repository's README
 
 ## Usage
 
@@ -81,13 +80,32 @@ Run the script with default parameters:
 poetry run python resume_updater.py
 ```
 
-Or customize the parameters:
+The script accepts the following parameters:
+
 ```python
 await update_resume(
-    resume_path="path/to/current_resume.pdf",
-    github_repos=["repo1_url", "repo2_url"],
-    job_posting_url="job_posting_url",
-    job_description_path="path/to/description.txt",
-    output_path="path/to/output.txt"
+    resume_path="/home/bnoffke/Documents/Resume/current_resume.pdf",  # Path to your current resume PDF
+    github_repos=[                                                    # List of GitHub repository URLs to analyze
+        "https://github.com/username/repo1",
+        "https://github.com/username/repo2"
+    ],
+    job_posting_url="https://example.com/job-posting",               # URL of the job posting
+    job_description_path="/path/to/job_description.txt",             # Path to additional job description file
+    output_path="/path/to/output/resume",                            # Output path and filename (without extension)
+    additional_info="/path/to/additional_info.txt"                    # Optional: Path to file with additional information
 )
 ```
+
+### Parameter Details
+
+- **resume_path**: Path to your current resume in PDF format
+- **github_repos**: List of GitHub repository URLs that showcase relevant work
+- **job_posting_url**: URL of the job posting to analyze
+- **job_description_path**: Path to a text file containing additional job description details
+- **output_path**: Base path for output files (will create both .md and .pdf)
+- **additional_info**: Optional path to a text file containing additional information to incorporate
+
+The script will:
+1. Generate a markdown file at `{output_path}.md`
+2. Pause for your review and modifications
+3. Create the final PDF at `{output_path}.pdf` using markdown2pdf-mcp server

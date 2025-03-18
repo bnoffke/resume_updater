@@ -11,13 +11,14 @@ from mcp_agent.workflows.evaluator_optimizer.evaluator_optimizer import (
     QualityRating,
 )
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
+from resume_schema import Resume, Personal, Job
 
 # Initialize app
 app = MCPApp(name="resume_updater")
 
 #Build request parameters, with options to specify a separate model for evaluator-optimizer
 small_model_req_param = RequestParams(model="gpt-4o-mini")
-eo_req_param = RequestParams(model="gpt-4o")
+eo_req_param = RequestParams(model="gpt-4o-mini")
 
 async def update_resume(
     resume_path: str,
@@ -49,6 +50,8 @@ async def update_resume(
             server_names=["filesystem", "markdownify"]
         )
 
+        
+
         github_agent = Agent(
             name="repo_analyzer",
             instruction="Analyze GitHub repos and extract the content of the README.md files. Use the provided job requirements to guide your analysis.",
@@ -78,9 +81,11 @@ async def update_resume(
                 request_params=small_model_req_param
             )
 
-            # Parse resume
-            pdf_content = await pdf_llm.generate_str(
-                f"Read and parse resume from {resume_path}",
+            # Parse resume with structured output
+            pdf_content = await pdf_llm.generate_structured(
+                message=f"""Read and parse resume from {resume_path}.
+                Extract and organize the information into a structured format with personal details and job history.""",
+                response_model=Resume,
                 request_params=small_model_req_param
             )
 
@@ -92,7 +97,7 @@ async def update_resume(
 
         # Manually aggregate results
         aggregated_results = {
-            "resume_content": pdf_content,
+            "resume_content": pdf_content.model_dump(),
             "github_projects": repo_content,
             "job_requirements": job_content,
             "additional_info": additional_info_content
@@ -103,7 +108,7 @@ async def update_resume(
             name="resume_optimizer",
             instruction="""
             You will receive the following information:
-            1. Current resume
+            1. Current resume content
             2. Github projects
             3. Job requirements
             4. Additional information
