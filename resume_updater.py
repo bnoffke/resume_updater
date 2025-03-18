@@ -1,7 +1,8 @@
 import asyncio
+import json
+import argparse
 from pathlib import Path
 from typing import List
-from pydantic import BaseModel
 
 from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
@@ -11,16 +12,16 @@ from mcp_agent.workflows.evaluator_optimizer.evaluator_optimizer import (
     QualityRating,
 )
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
-from resume_schema import Resume, Personal, Job
 
 # Initialize app
 app = MCPApp(name="resume_updater")
 
 #Build request parameters, with options to specify a separate model for evaluator-optimizer
 small_model_req_param = RequestParams(model="gpt-4o-mini")
-eo_req_param = RequestParams(model="gpt-4o-mini")
+eo_req_param = RequestParams(model="gpt-4o")
 
 async def update_resume(
+    root_path: str,
     resume_path: str,
     github_repos: List[str],
     job_posting_url: str,
@@ -28,10 +29,18 @@ async def update_resume(
     output_path: str,
     additional_info: str = "",
 ):
+    # Convert paths to be relative to root_path
+    resume_path = str(Path(root_path) / resume_path)
+    job_description_path = str(Path(root_path) / job_description_path)
+    output_path = str(Path(root_path) / output_path)
+    additional_info = str(Path(root_path) / additional_info)
+
     async with app.run() as mcp_agent_app:
         logger = mcp_agent_app.logger
 
         # Define agents
+        #Fetch is intentionally left out of job_analyzer for now because my current use case doesn't work with it
+        # (avoiding context bloat from the HTML it would grab)
         job_agent = Agent(
             name="job_analyzer", 
             instruction="Extract key requirements and details from job posting. You can find additional information in the provided txt file.",
@@ -81,11 +90,37 @@ async def update_resume(
                 request_params=small_model_req_param
             )
 
-            # Parse resume with structured output
-            pdf_content = await pdf_llm.generate_structured(
-                message=f"""Read and parse resume from {resume_path}.
-                Extract and organize the information into a structured format with personal details and job history.""",
-                response_model=Resume,
+            # Parse resume with structured* output
+            # I was hitting issues with getting mcp-agent to accept my Pydantic model. 
+            # With time constraints, a lack of examples, and some open issues about this function, 
+            # I opted for a string representation of the structured output.
+            pdf_content = await pdf_llm.generate_str(
+                f"""Read and parse resume from {resume_path}.
+                Extract and organize the information into a Python dictionary with this exact structure:
+                {{
+                    "personal": {{
+                        "name": "Full Name",
+                        "location": "City, State",
+                        "email": "email@example.com",
+                        "phone": "123-456-7890"
+                    }},
+                    "education": {{
+                        "University Name": {{
+                            "degree": "Degree Name",
+                            "time_range": "Start Date - End Date"
+                        }}
+                    }},
+                    "jobs": {{
+                        "Company Name": {{
+                            "title": "Job Title",
+                            "location": "Job Location",
+                            "time_range": "Start Date - End Date",
+                            "skills": ["Skill 1", "Skill 2", "..."],
+                            "summary": "Job description and achievements"
+                        }}
+                    }}
+                }}
+                Ensure the output is a valid Python dictionary that matches this structure exactly.""",
                 request_params=small_model_req_param
             )
 
@@ -97,7 +132,7 @@ async def update_resume(
 
         # Manually aggregate results
         aggregated_results = {
-            "resume_content": pdf_content.model_dump(),
+            "resume_content": pdf_content,
             "github_projects": repo_content,
             "job_requirements": job_content,
             "additional_info": additional_info_content
@@ -115,10 +150,10 @@ async def update_resume(
             Generate an optimized one-page resume.
             Using the current resume as a reference, update with relevant information and include relevant github projects with their summaries that target the job description.
             Use additional_information provided to enhance the resume.
-            Avoid flowerly language.
             Be sure to include links for the github repos and use a human readable name as the text for the github link. Keep it concise by making the project title a link.
             Please remove any content that is not relevant to the job description.
             Do NOT fabricate outcomes like "decreasing report generation time by 30%.". Do NOT include any technologies or libraries that are not explicitly mentioned in the current resume or github projects.
+            Do NOT fabricate certifications that are not explicitly mentioned in the current resume.
             Return ONLY the content of the resume, in markdown format.
             """,
             server_names=["filesystem"]
@@ -137,7 +172,8 @@ async def update_resume(
                 b. Skills should align with the job requirements above
                 c. Skills should incorporate relevant additional information provided
             4. Length (must fit one page)
-            5. Professional formatting""",
+            5. Professional formatting
+            6. Ensure no fabrication of outcomes or certifications""",
             server_names=["filesystem"]
         )
 
@@ -199,23 +235,33 @@ async def update_resume(
 
 # Main execution
 async def main(
-    resume_path="/home/bnoffke/Documents/Resume/current_resume.pdf",
-        github=[
-            "https://github.com/bnoffke/resume_updater",
-            "https://github.com/bnoffke/llm_scripting"
-        ],
-        job_posting_url="https://careers-uwcu.icims.com/jobs/5730/ai-engineer/job",
-        job_description_path="/home/bnoffke/Documents/Resume/job_description.txt",
-        output_path="/home/bnoffke/Documents/Resume/tailored_resume",
-        additional_info="/home/bnoffke/Documents/Resume/additional_info.txt",
-    ):
+    root_path: str,
+    resume_path: str,
+    github_repos: list,
+    job_posting_url: str,
+    job_description_path: str,
+    output_path: str,
+    additional_info: str,
+):
     await update_resume(
+        root_path=root_path,
         resume_path=resume_path,
-        github_repos=github,
+        github_repos=github_repos,
         job_posting_url=job_posting_url,
         job_description_path=job_description_path,
         output_path=output_path,
         additional_info=additional_info,
     )
+
+def load_config(json_path: str) -> dict:
+    with open(json_path, 'r') as f:
+        config = json.load(f)
+    return config
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description='Update resume based on job description and GitHub repos')
+    parser.add_argument('--config', type=str, help='Path to JSON config file', required=True)
+    args = parser.parse_args()
+    
+    config = load_config(args.config)
+    asyncio.run(main(**config))

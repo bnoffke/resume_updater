@@ -1,0 +1,12 @@
+{
+    "root_path": "/home/bnoffke/Documents/Resume",
+    "resume_path": "current_resume.pdf",
+    "github_repos": [
+        "https://github.com/bnoffke/resume_updater",
+        "https://github.com/bnoffke/llm_scripting"
+    ],
+    "job_posting_url": "https://careers-uwcu.icims.com/jobs/5730/ai-engineer/job",
+    "job_description_path": "job_description.txt",
+    "output_path": "tailored_resume",
+    "additional_info": "additional_info.txt"
+}
